@@ -33,3 +33,7 @@ class EmbeddingModel:
         )
 
         return embedding
+
+    @property
+    def dimension(self) -> int:
+        return self.model.get_sentence_embedding_dimension()
