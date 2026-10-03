@@ -107,3 +107,19 @@ class QdrantVectorStore:
             results.append(result)
 
         return results
+
+    def reset_collection(self, vector_size: int) -> None:
+        if self.client.collection_exists(
+            collection_name=self.collection_name
+        ):
+            self.client.delete_collection(
+                collection_name=self.collection_name
+            )
+
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=VectorParams(
+                size=vector_size,
+                distance=Distance.COSINE,
+            ),
+        )

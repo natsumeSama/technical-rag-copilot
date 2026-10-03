@@ -1,5 +1,7 @@
-from pathlib import Path
 from hashlib import sha256
+from pathlib import Path
+
+import frontmatter
 
 from ..models import Document
 
@@ -14,16 +16,31 @@ def load_markdown(
     path = Path(file_path)
 
     if not path.exists():
-        raise FileNotFoundError(f"Document path does not exist: {file_path}")
+        raise FileNotFoundError(
+            f"Document path does not exist: {file_path}"
+        )
+
+    post = frontmatter.load(path)
+
+    content = post.content
+
+    document_metadata = {
+        **post.metadata,
+        **metadata,
+    }
+
+    title = post.metadata.get("title", path.stem)
 
     identity = source_url + document_type
-    document_id = sha256(identity.encode("utf-8")).hexdigest()
+    document_id = sha256(
+        identity.encode("utf-8")
+    ).hexdigest()
 
-    title = path.stem
-    content = path.read_text(encoding="utf-8")
-    content_hash = sha256(content.encode("utf-8")).hexdigest()
+    content_hash = sha256(
+        content.encode("utf-8")
+    ).hexdigest()
 
-    document = Document(
+    return Document(
         id=document_id,
         content_hash=content_hash,
         title=title,
@@ -31,9 +48,5 @@ def load_markdown(
         source_name=source_name,
         source_url=source_url,
         document_type=document_type,
-        metadata=metadata,
+        metadata=document_metadata,
     )
-
-    return document
-
-

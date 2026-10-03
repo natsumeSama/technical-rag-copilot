@@ -62,7 +62,7 @@ vector_store = QdrantVectorStore(
     collection_name=COLLECTION_NAME,
 )
 
-vector_store.create_collection(
+vector_store.reset_collection(
     vector_size=embedding_model.dimension,
 )
 
