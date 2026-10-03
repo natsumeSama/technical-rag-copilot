@@ -1,0 +1,65 @@
+[
+  {
+    "file_path": "data/raw/qdrant/collections.md",
+    "source_name": "Qdrant",
+    "source_url": "https://github.com/qdrant/landing_page/blob/master/qdrant-landing/content/documentation/manage-data/collections.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/qdrant/search.md",
+    "source_name": "Qdrant",
+    "source_url": "https://github.com/qdrant/landing_page/blob/master/qdrant-landing/content/documentation/search/search.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/qdrant/filtering.md",
+    "source_name": "Qdrant",
+    "source_url": "https://github.com/qdrant/landing_page/blob/master/qdrant-landing/content/documentation/search/filtering.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/qdrant/hybrid_queries.md",
+    "source_name": "Qdrant",
+    "source_url": "https://github.com/qdrant/landing_page/blob/master/qdrant-landing/content/documentation/search/hybrid-queries.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/sentence_transformers/semantic_search.md",
+    "source_name": "Sentence Transformers",
+    "source_url": "https://github.com/huggingface/sentence-transformers/blob/main/examples/sentence_transformer/applications/semantic-search/README.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/sentence_transformers/retrieve_rerank.md",
+    "source_name": "Sentence Transformers",
+    "source_url": "https://github.com/huggingface/sentence-transformers/blob/main/examples/sentence_transformer/applications/retrieve_rerank/README.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  },
+  {
+    "file_path": "data/raw/sentence_transformers/applications.md",
+    "source_name": "Sentence Transformers",
+    "source_url": "https://github.com/huggingface/sentence-transformers/blob/main/examples/sentence_transformer/applications/README.md",
+    "document_type": "documentation",
+    "metadata": {
+      "language": "en"
+    }
+  }
+]

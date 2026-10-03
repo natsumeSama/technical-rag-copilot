@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What does sparse retrieval rely on?",
+    "relevant_section": "Sparse Retrieval"
+  },
+  {
+    "question": "Which retrieval method represents meaning using embeddings?",
+    "relevant_section": "Dense Retrieval"
+  },
+  {
+    "question": "How can dense and sparse retrieval be used together?",
+    "relevant_section": "Hybrid Search"
+  },
+  {
+    "question": "How are the results of dense and sparse retrieval combined?",
+    "relevant_section": "Fusion"
+  },
+  {
+    "question": "Which search approach relies more on matching terms?",
+    "relevant_section": "Sparse Retrieval"
+  }
+]

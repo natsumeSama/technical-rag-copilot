@@ -69,6 +69,10 @@ def chunk_document(
         ).hexdigest()
 
         chunk_metadata = {
+            "document_title": document.title,
+            "source_name": document.source_name,
+            "source_url": document.source_url,
+            "document_type": document.document_type,
             **document.metadata,
             **part.metadata,
         }
