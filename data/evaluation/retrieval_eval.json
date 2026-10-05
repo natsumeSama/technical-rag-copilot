@@ -1,22 +1,214 @@
 [
   {
-    "question": "What does sparse retrieval rely on?",
-    "relevant_section": "Sparse Retrieval"
+    "question": "What is a collection in Qdrant?",
+    "relevant_targets": [
+      {
+        "document_title": "Collections",
+        "section_title": "Collections"
+      }
+    ]
   },
   {
-    "question": "Which retrieval method represents meaning using embeddings?",
-    "relevant_section": "Dense Retrieval"
+    "question": "How do I create a new collection in Qdrant?",
+    "relevant_targets": [
+      {
+        "document_title": "Collections",
+        "section_title": "Create a Collection"
+      }
+    ]
   },
   {
-    "question": "How can dense and sparse retrieval be used together?",
-    "relevant_section": "Hybrid Search"
+    "question": "Can a Qdrant collection contain multiple vectors for each point?",
+    "relevant_targets": [
+      {
+        "document_title": "Collections",
+        "section_title": "Collection with Multiple Vectors"
+      }
+    ]
   },
   {
-    "question": "How are the results of dense and sparse retrieval combined?",
-    "relevant_section": "Fusion"
+    "question": "How can I check whether a Qdrant collection already exists?",
+    "relevant_targets": [
+      {
+        "document_title": "Collections",
+        "section_title": "Check Collection Existence"
+      }
+    ]
   },
   {
-    "question": "Which search approach relies more on matching terms?",
-    "relevant_section": "Sparse Retrieval"
+    "question": "What conditions can be used to filter search results in Qdrant?",
+    "relevant_targets": [
+      {
+        "document_title": "Filtering",
+        "section_title": "Filtering conditions"
+      },
+      {
+        "document_title": "Filtering",
+        "section_title": "Filtering"
+      }
+    ]
+  },
+  {
+    "question": "Which Qdrant filter clause excludes points that satisfy a condition?",
+    "relevant_targets": [
+      {
+        "document_title": "Filtering",
+        "section_title": "Must Not"
+      }
+    ]
+  },
+  {
+    "question": "How can several filtering conditions be combined?",
+    "relevant_targets": [
+      {
+        "document_title": "Filtering",
+        "section_title": "Clauses combination"
+      },
+      {
+        "document_title": "Filtering",
+        "section_title": "Filtering clauses"
+      }
+    ]
+  },
+  {
+    "question": "How does Qdrant decide how to execute a filtered search?",
+    "relevant_targets": [
+      {
+        "document_title": "Search",
+        "section_title": "Query Planning"
+      }
+    ]
+  },
+  {
+    "question": "Which similarity metrics are available when searching vectors in Qdrant?",
+    "relevant_targets": [
+      {
+        "document_title": "Search",
+        "section_title": "Metrics"
+      }
+    ]
+  },
+  {
+    "question": "How can Qdrant return payloads and vectors together with search results?",
+    "relevant_targets": [
+      {
+        "document_title": "Search",
+        "section_title": "Payload and Vector in the Result"
+      }
+    ]
+  },
+  {
+    "question": "What is hybrid search in Qdrant?",
+    "relevant_targets": [
+      {
+        "document_title": "Hybrid Queries",
+        "section_title": "Hybrid Search"
+      },
+      {
+        "document_title": "Hybrid Queries",
+        "section_title": "Hybrid and Multi-Stage Queries"
+      }
+    ]
+  },
+  {
+    "question": "How does reciprocal rank fusion combine results from different searches?",
+    "relevant_targets": [
+      {
+        "document_title": "Hybrid Queries",
+        "section_title": "Reciprocal Rank Fusion (RRF)"
+      }
+    ]
+  },
+  {
+    "question": "What other fusion method can be used instead of reciprocal rank fusion?",
+    "relevant_targets": [
+      {
+        "document_title": "Hybrid Queries",
+        "section_title": "Distribution-Based Score Fusion (DBSF)"
+      },
+      {
+        "document_title": "Hybrid Queries",
+        "section_title": "Choosing a Fusion Method"
+      }
+    ]
+  },
+  {
+    "question": "How does semantic search find documents with similar meaning?",
+    "relevant_targets": [
+      {
+        "document_title": "semantic_search",
+        "section_title": "Background"
+      },
+      {
+        "document_title": "semantic_search",
+        "section_title": "Semantic Search"
+      }
+    ]
+  },
+  {
+    "question": "What is the difference between symmetric and asymmetric semantic search?",
+    "relevant_targets": [
+      {
+        "document_title": "semantic_search",
+        "section_title": "Symmetric vs. Asymmetric Semantic Search"
+      }
+    ]
+  },
+  {
+    "question": "When should approximate nearest neighbor search be used?",
+    "relevant_targets": [
+      {
+        "document_title": "semantic_search",
+        "section_title": "Approximate Nearest Neighbor"
+      }
+    ]
+  },
+{
+  "question": "What role does a bi-encoder play in a retrieve and rerank pipeline?",
+  "relevant_targets": [
+    {
+      "document_title": "retrieve_rerank",
+      "section_title": "Retrieval: Bi-Encoder"
+    },
+    {
+      "document_title": "applications",
+      "section_title": "Retrieve & Rerank"
+    },
+    {
+      "document_title": "semantic_search",
+      "section_title": "Question & Answer Retrieval"
+    }
+  ]
+},
+  {
+    "question": "Why is a cross-encoder used after the first retrieval stage?",
+    "relevant_targets": [
+      {
+        "document_title": "retrieve_rerank",
+        "section_title": "Re-Ranker: Cross-Encoder"
+      }
+    ]
+  },
+  {
+    "question": "How does the complete retrieve and rerank pipeline work?",
+    "relevant_targets": [
+      {
+        "document_title": "retrieve_rerank",
+        "section_title": "Retrieve & Re-Rank Pipeline"
+      },
+      {
+        "document_title": "retrieve_rerank",
+        "section_title": "Retrieve & Re-Rank"
+      }
+    ]
+  },
+  {
+    "question": "What applications can Sentence Transformers be used for besides semantic search?",
+    "relevant_targets": [
+      {
+        "document_title": "applications",
+        "section_title": "Applications"
+      }
+    ]
   }
 ]
