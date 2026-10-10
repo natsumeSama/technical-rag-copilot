@@ -25,3 +25,13 @@ class SearchResult(BaseModel):
     section_title: str | None = None
     score: float
     metadata: dict[str, object]
+
+class Evidence(BaseModel):
+    citation_id: str
+    chunk_id: str
+    content: str
+    document_title: str
+    section_title: str | None
+    source_name: str
+    source_url: str
+    retrieval_score: float
