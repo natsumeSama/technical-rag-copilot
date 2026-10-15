@@ -17,7 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCES_PATH = PROJECT_ROOT / "data" / "sources.json"
 
 EMBEDDING_MODEL = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-LLM_MODEL = "qwen3.5:4b"
+LLM_MODEL = "qwen3:1.7b"
 
 COLLECTION_NAME = "technical_docs_v1"
 
