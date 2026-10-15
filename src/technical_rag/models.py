@@ -35,3 +35,12 @@ class Evidence(BaseModel):
     source_name: str
     source_url: str
     retrieval_score: float
+
+class CitationSupportResult(BaseModel):
+    claim: str
+    citation_id: str
+    label: str
+    supported: bool
+    entailment_score: float
+    neutral_score: float
+    contradiction_score: float

@@ -10,19 +10,24 @@ from technical_rag.ingestion.markdown import load_markdown
 from technical_rag.retrieval.bm25 import BM25Retriever
 from technical_rag.retrieval.hybrid import HybridRetriever
 from technical_rag.vector_store import QdrantVectorStore
-
+from technical_rag.generation.citations import (
+    CitationGroundingValidator,
+    CitationValidator,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 SOURCES_PATH = PROJECT_ROOT / "data" / "sources.json"
 
 EMBEDDING_MODEL = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+NLI_MODEL = "cross-encoder/nli-MiniLM2-L6-H768"
 LLM_MODEL = "qwen3:1.7b"
 
 COLLECTION_NAME = "technical_docs_v1"
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
+
 
 
 # --------------------------------------------------
@@ -80,6 +85,11 @@ retriever = HybridRetriever(
 
 context_builder = ContextBuilder()
 prompt_builder = RAGPromptBuilder()
+citation_validator = CitationValidator()
+
+grounding_validator = CitationGroundingValidator(
+    model_name=NLI_MODEL,
+)
 
 llm = OllamaLLM(
     model=LLM_MODEL,
@@ -114,6 +124,17 @@ answer = llm.generate(
     user_prompt=user_prompt,
 )
 
+valid_citations, invalid_citations = (
+    citation_validator.validate(
+        answer=answer,
+        evidence=evidence,
+    )
+)
+
+grounding_results = grounding_validator.validate(
+    answer=answer,
+    evidence=evidence,
+)
 
 # --------------------------------------------------
 # Display
@@ -139,3 +160,46 @@ print("\n" + "=" * 80)
 print("ANSWER")
 print("=" * 80)
 print(answer)
+
+print("\n" + "=" * 80)
+print("CITATION VALIDATION")
+print("=" * 80)
+
+print(
+    f"Valid citations: "
+    f"{valid_citations}"
+)
+
+print(
+    f"Invalid citations: "
+    f"{invalid_citations}"
+)
+print("\n" + "=" * 80)
+print("CITATION GROUNDING")
+print("=" * 80)
+
+for result in grounding_results:
+    print(
+        f"\nClaim: {result.claim}"
+    )
+    print(
+        f"Citation: [{result.citation_id}]"
+    )
+    print(
+        f"Label: {result.label}"
+    )
+    print(
+        f"Supported: {result.supported}"
+    )
+    print(
+        f"Entailment: "
+        f"{result.entailment_score:.3f}"
+    )
+    print(
+        f"Neutral: "
+        f"{result.neutral_score:.3f}"
+    )
+    print(
+        f"Contradiction: "
+        f"{result.contradiction_score:.3f}"
+    )
