@@ -94,11 +94,13 @@ question = "Which similarity metrics are available in Qdrant?"
 
 results = retriever.search(
     query=question,
-    limit=3,
+    limit=6,
     candidate_limit=10,
 )
-
-evidence = context_builder.build_evidence(results)
+evidence = context_builder.build_evidence(
+    results,
+    max_evidence=3,
+)
 
 context = context_builder.format_context(evidence)
 
