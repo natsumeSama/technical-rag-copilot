@@ -128,6 +128,28 @@ class CitationValidator:
 
         return pairs
 
+    def extract_uncited_statements(
+        self,
+        answer: str,
+    ) -> list[str]:
+        segments = re.split(
+            r"(?<=[.!?])\s+(?!\[S\d+\])|(?<=\])\s+(?=[A-Z])|\n+",
+            answer.strip(),
+        )
+
+        uncited = []
+
+        for segment in segments:
+            segment = segment.strip()
+
+            if not segment:
+                continue
+
+            if not self.CITATION_PATTERN.search(segment):
+                uncited.append(segment)
+
+        return uncited
+
 class CitationGroundingValidator:
     def __init__(
         self,
