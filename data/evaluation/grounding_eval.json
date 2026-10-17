@@ -1,0 +1,57 @@
+
+[
+  {
+    "id": "E1",
+    "claim": "Qdrant supports cosine similarity.",
+    "evidence": "Qdrant supports these metrics: Dot product, Cosine similarity, Euclidean distance, and Manhattan distance.",
+    "expected_label": "entailment"
+  },
+  {
+    "id": "E2",
+    "claim": "A Qdrant point can contain multiple vectors.",
+    "evidence": "Named vectors can be used to have multiple vectors in a single point, each of which can have their own dimensionality and metric requirements.",
+    "expected_label": "entailment"
+  },
+  {
+    "id": "E3",
+    "claim": "RRF uses the positions of search results to combine rankings.",
+    "evidence": "RRF considers the positions of results within each query and boosts those that appear closer to the top in multiple sets of results.",
+    "expected_label": "entailment"
+  },
+  {
+    "id": "C1",
+    "claim": "Qdrant only supports Euclidean distance.",
+    "evidence": "Qdrant supports these metrics: Dot product, Cosine similarity, Euclidean distance, and Manhattan distance.",
+    "expected_label": "contradiction"
+  },
+  {
+    "id": "C2",
+    "claim": "A Qdrant point can contain only one vector.",
+    "evidence": "Named vectors can be used to have multiple vectors in a single point, each of which can have their own dimensionality and metric requirements.",
+    "expected_label": "contradiction"
+  },
+  {
+    "id": "C3",
+    "claim": "RRF ignores the positions of search results.",
+    "evidence": "RRF considers the positions of results within each query and boosts those that appear closer to the top in multiple sets of results.",
+    "expected_label": "contradiction"
+  },
+  {
+    "id": "N1",
+    "claim": "Qdrant earned 50 million dollars in 2025.",
+    "evidence": "Qdrant supports these metrics: Dot product, Cosine similarity, Euclidean distance, and Manhattan distance.",
+    "expected_label": "neutral"
+  },
+  {
+    "id": "N2",
+    "claim": "Qdrant automatically backs up all stored vectors.",
+    "evidence": "Named vectors can be used to have multiple vectors in a single point, each of which can have their own dimensionality and metric requirements.",
+    "expected_label": "neutral"
+  },
+  {
+    "id": "N3",
+    "claim": "RRF is the fastest fusion algorithm for every dataset.",
+    "evidence": "RRF considers the positions of results within each query and boosts those that appear closer to the top in multiple sets of results.",
+    "expected_label": "neutral"
+  }
+]
