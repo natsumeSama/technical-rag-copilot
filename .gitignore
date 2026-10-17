@@ -26,3 +26,6 @@ data/raw/
 
 # Local vector database
 qdrant_storage/
+
+# Generated evaluation results
+data/evaluation/results/
