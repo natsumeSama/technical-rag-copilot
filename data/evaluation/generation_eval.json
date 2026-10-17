@@ -1,0 +1,57 @@
+
+[
+  {
+    "id": "A1",
+    "category": "answerable",
+    "question": "Which similarity metrics does Qdrant support?",
+    "expected_behavior": "answer",
+    "expected_facts": [
+      "Cosine",
+      "Dot",
+      "Euclid",
+      "Manhattan"
+    ]
+  },
+  {
+    "id": "A2",
+    "category": "answerable",
+    "question": "How does reciprocal rank fusion combine search results?",
+    "expected_behavior": "answer",
+    "expected_facts": [
+      "Combines ranked retrieval results",
+      "Uses reciprocal ranks"
+    ]
+  },
+  {
+    "id": "U1",
+    "category": "unanswerable",
+    "question": "What was Qdrant's total revenue in 2025?",
+    "expected_behavior": "abstain",
+    "expected_facts": []
+  },
+  {
+    "id": "U2",
+    "category": "unanswerable",
+    "question": "How many employees did Qdrant hire in January 2025?",
+    "expected_behavior": "abstain",
+    "expected_facts": []
+  },
+  {
+    "id": "M1",
+    "category": "misleading",
+    "question": "Why does Qdrant only support Euclidean distance?",
+    "expected_behavior": "correct_false_premise",
+    "expected_facts": [
+      "Qdrant supports other distance metrics"
+    ]
+  },
+  {
+    "id": "M2",
+    "category": "misleading",
+    "question": "Why can a Qdrant point only contain one vector?",
+    "expected_behavior": "correct_false_premise",
+    "expected_facts": [
+      "Qdrant supports multiple vectors per point"
+    ]
+  }
+]
