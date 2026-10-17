@@ -54,7 +54,7 @@ class CitationValidator:
 
         # Split the answer into individual sentences or lines.
         segments = re.split(
-            r"(?<=[.!?])\s+|\n+",
+            r"(?<=[.!?])\s+(?!\[S\d+\])|(?<=\])\s+(?=[A-Z])|\n+",
             answer.strip(),
         )
 

@@ -27,3 +27,8 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "technical_rag"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
