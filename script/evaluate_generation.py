@@ -4,77 +4,16 @@
 import json
 from pathlib import Path
 
-from technical_rag.chunking import chunk_document
-from technical_rag.embeddings import EmbeddingModel
-from technical_rag.generation.citations import CitationGroundingValidator
-from technical_rag.generation.llm import OllamaLLM
-from technical_rag.ingestion.markdown import load_markdown
-from technical_rag.pipeline import RAGPipeline
-from technical_rag.retrieval.bm25 import BM25Retriever
-from technical_rag.retrieval.hybrid import HybridRetriever
-from technical_rag.vector_store import QdrantVectorStore
+from technical_rag.factory import build_pipeline
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
-SOURCES_PATH = ROOT / "data/sources.json"
 EVAL_PATH = ROOT / "data/evaluation/generation_eval.json"
+
 OUTPUT_PATH = (
     ROOT / "data/evaluation/results/generation_results_pipeline.json"
 )
-
-EMBEDDING_MODEL = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-NLI_MODEL = "cross-encoder/nli-MiniLM2-L6-H768"
-LLM_MODEL = "qwen3:1.7b"
-
-COLLECTION_NAME = "technical_docs_v1"
-
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
-
-
-def build_pipeline() -> RAGPipeline:
-    """Initialize and return our RAG pipeline."""
-
-    sources = json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
-    chunks = []
-
-    for source in sources:
-        document = load_markdown(
-            file_path=str(ROOT / source["file_path"]),
-            source_name=source["source_name"],
-            source_url=source["source_url"],
-            document_type=source["document_type"],
-            metadata=source["metadata"],
-        )
-
-        chunks.extend(
-            chunk_document(
-                document=document,
-                chunk_size=CHUNK_SIZE,
-                chunk_overlap=CHUNK_OVERLAP,
-            )
-        )
-
-    bm25 = BM25Retriever()
-    bm25.index(chunks)
-
-    retriever = HybridRetriever(
-        embedding_model=EmbeddingModel(EMBEDDING_MODEL),
-        vector_store=QdrantVectorStore(
-            url="http://localhost:6333",
-            collection_name=COLLECTION_NAME,
-        ),
-        bm25_retriever=bm25,
-    )
-
-    return RAGPipeline(
-        retriever=retriever,
-        llm=OllamaLLM(model=LLM_MODEL),
-        grounding_validator=CitationGroundingValidator(
-            model_name=NLI_MODEL,
-        ),
-    )
 
 
 def save_results(results: list[dict]) -> None:
@@ -92,7 +31,9 @@ def main():
     if not cases:
         raise ValueError("Evaluation dataset is empty")
 
+    # Initialize the shared RAG pipeline once
     rag = build_pipeline()
+
     records = []
 
     for index, case in enumerate(cases, start=1):
@@ -101,7 +42,7 @@ def main():
             f"{case['id']}: {case['question']}"
         )
 
-        # One method runs the complete RAG
+        # Run the complete RAG pipeline
         result = rag.ask(case["question"])
 
         record = {
