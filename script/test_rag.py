@@ -14,6 +14,7 @@ from technical_rag.generation.citations import (
     CitationGroundingValidator,
     CitationValidator,
 )
+from technical_rag.pipeline import RAGPipeline
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,123 +84,41 @@ retriever = HybridRetriever(
 # Generation components
 # --------------------------------------------------
 
-context_builder = ContextBuilder()
-prompt_builder = RAGPromptBuilder()
-citation_validator = CitationValidator()
-
-grounding_validator = CitationGroundingValidator(
-    model_name=NLI_MODEL,
+# Initialize the RAG pipeline
+rag = RAGPipeline(
+    retriever=retriever,
+    llm=OllamaLLM(model=LLM_MODEL),
+    grounding_validator=CitationGroundingValidator(
+        model_name=NLI_MODEL,
+    ),
 )
 
-llm = OllamaLLM(
-    model=LLM_MODEL,
+# Ask a question
+result = rag.ask(
+    "Which similarity metrics does Qdrant support?"
 )
 
+print("\nQUESTION")
+print(result.question)
 
-# --------------------------------------------------
-# Ask the RAG
-# --------------------------------------------------
+print("\nANSWER")
+print(result.answer)
 
-question = "Which similarity metrics are available in Qdrant?"
-
-results = retriever.search(
-    query=question,
-    limit=6,
-    candidate_limit=10,
-)
-evidence = context_builder.build_evidence(
-    results,
-    max_evidence=3,
-)
-
-context = context_builder.format_context(evidence)
-
-system_prompt, user_prompt = prompt_builder.build(
-    question=question,
-    context=context,
-)
-
-answer = llm.generate(
-    system_prompt=system_prompt,
-    user_prompt=user_prompt,
-)
-
-valid_citations, invalid_citations = (
-    citation_validator.validate(
-        answer=answer,
-        evidence=evidence,
-    )
-)
-
-grounding_results = grounding_validator.validate(
-    answer=answer,
-    evidence=evidence,
-)
-
-# --------------------------------------------------
-# Display
-# --------------------------------------------------
-
-print("\n" + "=" * 80)
-print("QUESTION")
-print("=" * 80)
-print(question)
-
-print("\n" + "=" * 80)
-print("RETRIEVED EVIDENCE")
-print("=" * 80)
-
-for item in evidence:
+print("\nEVIDENCE")
+for item in result.evidence:
     print(
         f"[{item.citation_id}] "
-        f"{item.document_title} | "
-        f"{item.section_title}"
+        f"{item.document_title} | {item.section_title}"
     )
 
-print("\n" + "=" * 80)
-print("ANSWER")
-print("=" * 80)
-print(answer)
+print("\nCITATION VALIDATION")
+print("Valid:", result.valid_citations)
+print("Invalid:", result.invalid_citations)
+print("Uncited:", result.uncited_statements)
 
-print("\n" + "=" * 80)
-print("CITATION VALIDATION")
-print("=" * 80)
-
-print(
-    f"Valid citations: "
-    f"{valid_citations}"
-)
-
-print(
-    f"Invalid citations: "
-    f"{invalid_citations}"
-)
-print("\n" + "=" * 80)
-print("CITATION GROUNDING")
-print("=" * 80)
-
-for result in grounding_results:
+print("\nNLI GROUNDING")
+for item in result.grounding:
     print(
-        f"\nClaim: {result.claim}"
-    )
-    print(
-        f"Citation: [{result.citation_id}]"
-    )
-    print(
-        f"Label: {result.label}"
-    )
-    print(
-        f"Supported: {result.supported}"
-    )
-    print(
-        f"Entailment: "
-        f"{result.entailment_score:.3f}"
-    )
-    print(
-        f"Neutral: "
-        f"{result.neutral_score:.3f}"
-    )
-    print(
-        f"Contradiction: "
-        f"{result.contradiction_score:.3f}"
+        f"[{item.citation_id}] "
+        f"{item.claim} -> {item.label}"
     )

@@ -44,3 +44,13 @@ class CitationSupportResult(BaseModel):
     entailment_score: float
     neutral_score: float
     contradiction_score: float
+
+
+class RAGResult(BaseModel):
+    question: str
+    answer: str
+    evidence: list[Evidence]
+    valid_citations: list[str]
+    invalid_citations: list[str]
+    uncited_statements: list[str]
+    grounding: list[CitationSupportResult]
