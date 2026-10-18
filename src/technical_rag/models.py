@@ -54,3 +54,4 @@ class RAGResult(BaseModel):
     invalid_citations: list[str]
     uncited_statements: list[str]
     grounding: list[CitationSupportResult]
+    timing_seconds: dict[str, float]

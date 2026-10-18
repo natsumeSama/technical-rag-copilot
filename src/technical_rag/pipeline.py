@@ -8,7 +8,7 @@ from .generation.llm import OllamaLLM
 from .generation.prompt import RAGPromptBuilder
 from .models import RAGResult
 from .retrieval.hybrid import HybridRetriever
-
+from time import perf_counter
 
 class RAGPipeline:
     def __init__(
@@ -28,7 +28,7 @@ class RAGPipeline:
     def ask(self, question: str) -> RAGResult:
         if not question.strip():
             raise ValueError("Question cannot be empty")
-
+        started = perf_counter()
         # 1. Retrieve relevant chunks
         results = self.retriever.search(
             query=question,
@@ -41,7 +41,7 @@ class RAGPipeline:
             results,
             max_evidence=3,
         )
-
+        retrieval_s = perf_counter() - started
         # 3. Build the LLM prompt
         context = self.context_builder.format_context(evidence)
 
@@ -49,12 +49,15 @@ class RAGPipeline:
             question=question,
             context=context,
         )
-
+        generation_started = perf_counter()
         # 4. Generate the answer
         answer = self.llm.generate(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
         )
+
+        generation_s = perf_counter() - generation_started
+        validation_started = perf_counter()
 
         # 5. Validate citations
         valid_citations, invalid_citations = (
@@ -78,7 +81,7 @@ class RAGPipeline:
                 answer=answer,
                 evidence=evidence,
             )
-
+        validation_s = perf_counter() - validation_started
         # 7. Return structured result
         return RAGResult(
             question=question,
@@ -88,4 +91,10 @@ class RAGPipeline:
             invalid_citations=invalid_citations,
             uncited_statements=uncited_statements,
             grounding=grounding,
+            timing_seconds={
+                "retrieval": round(retrieval_s, 3),
+                "generation": round(generation_s, 3),
+                "validation": round(validation_s, 3),
+                "total": round(perf_counter() - started, 3),
+            },
         )
