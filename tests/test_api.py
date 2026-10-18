@@ -118,3 +118,12 @@ def test_ask_missing_question(client):
 
     assert response.status_code == 422
     fake_rag.ask.assert_not_called()
+
+def test_homepage(client):
+    test_client, _ = client
+
+    response = test_client.get("/")
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Technical RAG Copilot" in response.text

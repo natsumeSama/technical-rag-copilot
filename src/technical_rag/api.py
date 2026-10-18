@@ -7,6 +7,10 @@ from pydantic import BaseModel, Field
 from .factory import build_pipeline
 from .models import RAGResult
 
+from pathlib import Path
+from fastapi.responses import FileResponse
+
+HTML_FILE = Path(__file__).resolve().parent / "static" / "index.html"
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=1000)
@@ -30,6 +34,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse(HTML_FILE)
 
 @app.get("/health")
 def health():
