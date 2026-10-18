@@ -201,13 +201,7 @@ class CitationGroundingValidator:
             if evidence_item is None:
                 continue
 
-            premise = (
-                f"Document: "
-                f"{evidence_item.document_title}\n"
-                f"Section: "
-                f"{evidence_item.section_title}\n"
-                f"{evidence_item.content}"
-            )
+            premise = evidence_item.content
 
             model_pairs.append(
                 (

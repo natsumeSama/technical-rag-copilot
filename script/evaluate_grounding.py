@@ -4,6 +4,8 @@ from pathlib import Path
 
 from technical_rag.models import Evidence
 from technical_rag.generation.citations import CitationGroundingValidator
+import numpy as np
+
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,6 +43,24 @@ for case in cases:
 
     prediction = results[0].label
     expected = case["expected_label"]
+
+    # Direct NLI prediction, without document metadata
+    raw_logits = np.asarray(
+        validator.model.predict([
+            (case["evidence"], case["claim"])
+        ])
+    )
+
+    raw_prediction = validator.id2label[
+        int(np.argmax(raw_logits[0]))
+    ]
+
+    print(
+        f'{case["id"]}: '
+        f'Expected={expected:<14} '
+        f'Wrapped={prediction:<14} '
+        f'Raw={raw_prediction:<14}'
+    )
 
     passed = prediction == expected
 
