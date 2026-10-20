@@ -29,3 +29,6 @@ qdrant_storage/
 
 # Generated evaluation results
 data/evaluation/results/
+
+# Local ingestion state
+data/state/
