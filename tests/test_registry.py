@@ -34,3 +34,8 @@ def test_document_registry(tmp_path):
     # Verify persistence after reopening the database
     reopened = DocumentRegistry(db_path)
     assert reopened.get_status(document) == "unchanged"
+    assert reopened.list_indexed_ids() == {"doc-1"}
+
+    # Simulate an empty source manifest
+    deleted_ids = reopened.list_indexed_ids() - set()
+    assert deleted_ids == {"doc-1"}
