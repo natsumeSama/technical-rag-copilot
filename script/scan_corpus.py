@@ -21,7 +21,7 @@ def main():
     )
 
     statuses = Counter()
-
+    current_ids = set()
     for source in sources:
         document = load_markdown(
             file_path=str(ROOT / source["file_path"]),
@@ -30,14 +30,21 @@ def main():
             document_type=source["document_type"],
             metadata=source["metadata"],
         )
-
+        current_ids.add(document.id)
         status = registry.get_status(document)
         statuses[status] += 1
-
         print(f"{document.title}: {status.upper()}")
 
+    deleted_ids = registry.list_indexed_ids() - current_ids
+
+    statuses["deleted"] = len(deleted_ids)
+
+    for document_id in deleted_ids:
+        print(f"{document_id}: DELETED")
+
     print("\nSCAN SUMMARY")
-    for status in ("new", "modified", "unchanged"):
+    
+    for status in ("new", "modified", "unchanged", "deleted"):
         print(f"{status}: {statuses[status]}")
 
 

@@ -55,3 +55,12 @@ class DocumentRegistry:
                 (document.id, document.content_hash),
             )
             conn.commit()
+
+
+    def list_indexed_ids(self) -> set[str]:
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            rows = conn.execute(
+                "SELECT document_id FROM indexed_documents"
+            ).fetchall()
+
+        return {row[0] for row in rows}
