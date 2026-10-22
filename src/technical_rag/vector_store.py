@@ -22,7 +22,7 @@ class StoredChunk:
     section_title: str | None
     metadata: dict[str, object]
     vector: np.ndarray
-
+    chunk_index: int | None = None
 class QdrantVectorStore:
     def __init__(
         self,
@@ -32,10 +32,19 @@ class QdrantVectorStore:
         self.client = QdrantClient(url=url)
         self.collection_name = collection_name
 
-    def create_collection(self, vector_size: int) -> None:
+    def create_collection(
+        self,
+        vector_size: int,
+        *,
+        fail_if_exists: bool = False,
+    ) -> None:
         if self.client.collection_exists(
             collection_name=self.collection_name
         ):
+            if fail_if_exists:
+                raise RuntimeError(
+                    f"Collection already exists: {self.collection_name}"
+                )
             return
 
         self.client.create_collection(
@@ -50,12 +59,21 @@ class QdrantVectorStore:
         self,
         chunks: list[Chunk],
         embeddings: np.ndarray,
+        *,
+        embedding_fingerprint: str | None = None,
     ) -> None:
         if len(chunks) != len(embeddings):
             raise ValueError(
                 "The number of chunks must match the number of embeddings"
             )
+        if not chunks:
+            return
 
+        if embeddings.ndim != 2:
+            raise ValueError("Embeddings must be a 2D matrix")
+
+        if not np.isfinite(embeddings).all():
+            raise ValueError("Embeddings contain NaN or infinity")
         points = []
 
         for chunk, embedding in zip(chunks, embeddings):
@@ -64,12 +82,16 @@ class QdrantVectorStore:
             )
 
             payload = {
+                **chunk.metadata,
                 "chunk_id": chunk.id,
                 "document_id": chunk.document_id,
                 "content": chunk.content,
                 "section_title": chunk.section_title,
-                **chunk.metadata,
+                "chunk_index": chunk.chunk_index,
             }
+
+            if embedding_fingerprint is not None:
+                payload["_embedding_fingerprint"] = embedding_fingerprint
 
             point = PointStruct(
                 id=point_id,
@@ -82,6 +104,7 @@ class QdrantVectorStore:
         self.client.upsert(
             collection_name=self.collection_name,
             points=points,
+            wait=True,
         )
 
     def search(
@@ -209,10 +232,8 @@ class QdrantVectorStore:
                         for key, value in payload.items()
                         if key not in excluded
                     },
-                    vector=np.asarray(
-                        vector,
-                        dtype=np.float32,
-                    ),
+                    vector=np.asarray(vector, dtype=np.float32),
+                    chunk_index=payload.get("chunk_index"),
                 )
 
             # 4. Stop when all pages have been retrieved

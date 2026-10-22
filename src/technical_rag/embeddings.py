@@ -5,9 +5,16 @@ from .models import Chunk
 from .embedding_text import embedding_text
 
 class EmbeddingModel:
-    def __init__(self, model_name: str):
-        self.model = SentenceTransformer(model_name)
-
+    def __init__(
+        self,
+        model_name: str,
+        revision: str | None = None,
+    ):
+        self.model = SentenceTransformer(
+            model_name,
+            revision=revision,
+        )
+        
     def embed_documents(self, chunks: list[Chunk]) -> np.ndarray:
         texts = [embedding_text(chunk) for chunk in chunks]
 
@@ -29,3 +36,5 @@ class EmbeddingModel:
     @property
     def dimension(self) -> int:
         return self.model.get_embedding_dimension()
+
+    
