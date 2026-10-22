@@ -1,10 +1,8 @@
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
+
 from uuid import NAMESPACE_URL, uuid5
 
 import numpy as np
-from qdrant_client.models import PointStruct
-
 from .models import Chunk, SearchResult
 from dataclasses import dataclass
 
@@ -12,8 +10,11 @@ from qdrant_client.models import (
     Filter,
     FieldCondition,
     MatchValue,
+    PointIdsList,
+    Distance,
+    VectorParams,
+    PointStruct,
 )
-
 @dataclass
 class StoredChunk:
     chunk_id: str
@@ -241,3 +242,80 @@ class QdrantVectorStore:
                 break
 
         return stored_chunks
+
+    
+    def get_document_payloads(
+        self,
+        document_id: str,
+    ) -> dict[str, dict]:
+
+        result = {}
+        offset = None
+
+        document_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
+            ]
+        )
+
+        while True:
+            points, offset = self.client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=document_filter,
+                limit=100,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+
+            for point in points:
+                payload = point.payload or {}
+                chunk_id = payload.get("chunk_id")
+
+                if not isinstance(chunk_id, str):
+                    raise ValueError("Missing chunk ID")
+
+                if payload.get("document_id") != document_id:
+                    raise ValueError("Unexpected document ID")
+
+                if chunk_id in result:
+                    raise ValueError(
+                        f"Duplicate chunk ID: {chunk_id}"
+                    )
+
+                result[chunk_id] = payload
+
+            if offset is None:
+                break
+
+        return result
+
+
+    def delete_chunks(
+        self,
+        chunk_ids: set[str],
+        batch_size: int = 100,
+    ) -> None:
+        if batch_size <= 0:
+            raise ValueError("batch_size must be positive")
+
+        ordered_ids = sorted(chunk_ids)
+
+        for start in range(0, len(ordered_ids), batch_size):
+            batch = ordered_ids[start:start + batch_size]
+
+            point_ids = [
+                str(uuid5(NAMESPACE_URL, chunk_id))
+                for chunk_id in batch
+            ]
+
+            self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=PointIdsList(
+                    points=point_ids,
+                ),
+                wait=True,
+            )
