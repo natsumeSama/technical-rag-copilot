@@ -6,6 +6,22 @@ import numpy as np
 from qdrant_client.models import PointStruct
 
 from .models import Chunk, SearchResult
+from dataclasses import dataclass
+
+from qdrant_client.models import (
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
+
+@dataclass
+class StoredChunk:
+    chunk_id: str
+    document_id: str
+    content: str
+    section_title: str | None
+    metadata: dict[str, object]
+    vector: np.ndarray
 
 class QdrantVectorStore:
     def __init__(
@@ -123,3 +139,84 @@ class QdrantVectorStore:
                 distance=Distance.COSINE,
             ),
         )
+
+
+    def get_document_chunks(
+        self,
+        document_id: str,
+    ) -> dict[str, StoredChunk]:
+
+        stored_chunks = {}
+        offset = None
+
+        # 1. Only select points belonging to this document
+        document_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
+            ]
+        )
+
+        # 2. Retrieve all matching points, page by page
+        while True:
+            points, offset = self.client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=document_filter,
+                limit=100,
+                offset=offset,
+                with_payload=True,
+                with_vectors=True,
+            )
+
+            # 3. Extract each chunk and its embedding
+            for point in points:
+                payload = point.payload or {}
+
+                chunk_id = payload.get("chunk_id")
+                content = payload.get("content")
+                vector = point.vector
+
+                if (
+                    not isinstance(chunk_id, str)
+                    or payload.get("document_id") != document_id
+                    or not isinstance(content, str)
+                    or not isinstance(vector, list)
+                    or not vector
+                ):
+                    raise ValueError("Invalid stored chunk")
+
+                if chunk_id in stored_chunks:
+                    raise ValueError(
+                        f"Duplicate chunk ID: {chunk_id}"
+                    )
+
+                excluded = {
+                    "chunk_id",
+                    "document_id",
+                    "content",
+                    "section_title",
+                }
+
+                stored_chunks[chunk_id] = StoredChunk(
+                    chunk_id=chunk_id,
+                    document_id=document_id,
+                    content=content,
+                    section_title=payload.get("section_title"),
+                    metadata={
+                        key: value
+                        for key, value in payload.items()
+                        if key not in excluded
+                    },
+                    vector=np.asarray(
+                        vector,
+                        dtype=np.float32,
+                    ),
+                )
+
+            # 4. Stop when all pages have been retrieved
+            if offset is None:
+                break
+
+        return stored_chunks
