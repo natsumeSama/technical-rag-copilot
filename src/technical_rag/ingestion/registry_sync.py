@@ -23,6 +23,7 @@ def sync_source_document(
     chunk_size: int = 1000,
     chunk_overlap: int = 150,
     batch_size: int = 100,
+    index_signature: str | None = None,
 ) -> SyncReport:
 
     # 1. Generate the current document chunks
@@ -90,7 +91,10 @@ def sync_source_document(
     )
 
     # 6. Record the successful version in SQLite
-    registry.mark_indexed(document)
+    registry.mark_indexed(
+        document,
+        index_signature=index_signature,
+    )
 
     return report
 

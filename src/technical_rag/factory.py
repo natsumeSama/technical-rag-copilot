@@ -1,5 +1,8 @@
 
 import json
+import os
+
+from .config_v2 import MODEL_REVISION
 from pathlib import Path
 
 from .chunking import chunk_document
@@ -21,7 +24,11 @@ EMBEDDING_MODEL = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
 NLI_MODEL = "cross-encoder/nli-MiniLM2-L6-H768"
 LLM_MODEL = "qwen3:1.7b"
 
-COLLECTION_NAME = "technical_docs_v1"
+COLLECTION_NAME = os.getenv(
+    "RAG_COLLECTION",
+    "technical_docs_v1",
+)
+
 QDRANT_URL = "http://localhost:6333"
 
 CHUNK_SIZE = 1000
@@ -65,8 +72,16 @@ def build_pipeline(
     bm25.index(all_chunks)
 
     # 3. Initialize dense retrieval
-    embedding_model = EmbeddingModel(EMBEDDING_MODEL)
+    revision = (
+        MODEL_REVISION
+        if COLLECTION_NAME == "technical_docs_v2"
+        else None
+    )
 
+    embedding_model = EmbeddingModel(
+        EMBEDDING_MODEL,
+        revision=revision,
+    )
     vector_store = QdrantVectorStore(
         url=QDRANT_URL,
         collection_name=COLLECTION_NAME,
