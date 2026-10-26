@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "bm25s>=0.3.12",
     "fastapi>=0.146.0",
+    "fastembed>=0.9.1",
     "langchain-text-splitters>=1.1.2",
     "ollama>=0.6.3",
     "pydantic>=2.13.5",
