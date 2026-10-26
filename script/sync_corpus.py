@@ -12,6 +12,7 @@ from technical_rag.config_v2 import (
     QDRANT_URL,
     CHUNK_SIZE,
     CHUNK_OVERLAP,
+    REGISTRY_PATH,
 )
 from technical_rag.embeddings import EmbeddingModel
 from technical_rag.ingestion.embedding_reuse import EmbeddingSpec
@@ -26,7 +27,6 @@ from technical_rag.vector_store import QdrantVectorStore
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES_PATH = ROOT / "data/sources.json"
-REGISTRY_PATH = ROOT / "data/state/registry_v2.db"
 
 
 def load_documents():

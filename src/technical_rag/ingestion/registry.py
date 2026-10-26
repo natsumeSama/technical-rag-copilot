@@ -109,14 +109,6 @@ class DocumentRegistry:
 
         return {row[0] for row in rows}
 
-    def list_indexed_ids(self) -> set[str]:
-        with closing(sqlite3.connect(self.db_path)) as conn:
-            rows = conn.execute(
-                "SELECT document_id FROM indexed_documents"
-            ).fetchall()
-
-        return {row[0] for row in rows}
-
 
     def remove_indexed(self, document_id: str) -> None:
         with closing(sqlite3.connect(self.db_path)) as conn:

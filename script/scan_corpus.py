@@ -5,15 +5,18 @@ from pathlib import Path
 
 from technical_rag.ingestion.markdown import load_markdown
 from technical_rag.ingestion.registry import DocumentRegistry
-
+from technical_rag.config_v2 import REGISTRY_PATH
 
 ROOT = Path(__file__).resolve().parents[1]
 
 SOURCES_PATH = ROOT / "data/sources.json"
-REGISTRY_PATH = ROOT / "data/state/registry.db"
 
 
 def main():
+    print(
+        "CONTENT-ONLY SCAN "
+        "(metadata and model changes are not checked)"
+    )
     registry = DocumentRegistry(REGISTRY_PATH)
 
     sources = json.loads(
