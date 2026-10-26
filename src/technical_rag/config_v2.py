@@ -16,3 +16,5 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_PATH = (
     PROJECT_ROOT / "data" / "state" / "registry_v2.db"
 )
+
+SOURCES_PATH = PROJECT_ROOT / "data" / "sources.json"

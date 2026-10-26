@@ -9,54 +9,17 @@ from technical_rag.embeddings import EmbeddingModel
 from technical_rag.ingestion.embedding_reuse import EmbeddingSpec
 from technical_rag.ingestion.markdown import load_markdown
 from technical_rag.vector_store import QdrantVectorStore
-
-
-ROOT = Path(__file__).resolve().parents[1]
-
-SOURCES_PATH = ROOT / "data/sources.json"
-
-MODEL_ID = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-MODEL_REVISION = "b207367332321f8e44f96e224ef15bc607f4dbf0"
-
-COLLECTION_NAME = "technical_docs_v2"
-QDRANT_URL = "http://localhost:6333"
-
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
-
-
-def load_corpus():
-    sources = json.loads(
-        SOURCES_PATH.read_text(encoding="utf-8")
-    )
-
-    all_chunks = []
-
-    for source in sources:
-        document = load_markdown(
-            file_path=str(ROOT / source["file_path"]),
-            source_name=source["source_name"],
-            source_url=source["source_url"],
-            document_type=source["document_type"],
-            metadata=source["metadata"],
-        )
-
-        chunks = chunk_document(
-            document=document,
-            chunk_size=CHUNK_SIZE,
-            chunk_overlap=CHUNK_OVERLAP,
-        )
-
-        all_chunks.extend(chunks)
-
-    if not all_chunks:
-        raise ValueError("Cannot index an empty corpus")
-
-    if len({c.id for c in all_chunks}) != len(all_chunks):
-        raise ValueError("Duplicate chunk IDs detected")
-
-    return all_chunks
-
+from technical_rag.config_v2 import (
+    PROJECT_ROOT,
+    SOURCES_PATH,
+    MODEL_ID,
+    MODEL_REVISION,
+    COLLECTION_NAME,
+    QDRANT_URL,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP,
+)
+from technical_rag.ingestion.corpus import load_chunks
 
 def main():
     # 1. Protect any existing collection
@@ -72,7 +35,12 @@ def main():
         )
 
     # 2. Load the source documents
-    chunks = load_corpus()
+    chunks = load_chunks(
+        sources_path=SOURCES_PATH,
+        project_root=PROJECT_ROOT,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+    )
     print(f"Loaded {len(chunks)} chunks")
 
     # 3. Load a pinned embedding model

@@ -14,7 +14,10 @@ from technical_rag.config_v2 import (
     QDRANT_URL,
     CHUNK_SIZE,
     CHUNK_OVERLAP,
+    PROJECT_ROOT,
+    SOURCES_PATH,
 )
+from technical_rag.ingestion.corpus import load_chunks
 from technical_rag.embeddings import EmbeddingModel
 from technical_rag.ingestion.embedding_reuse import EmbeddingSpec
 from technical_rag.ingestion.markdown import load_markdown
@@ -26,40 +29,8 @@ from technical_rag.retrieval.sparse_embeddings import BM25SparseEncoder
 from technical_rag.vector_store import QdrantVectorStore
 
 
-ROOT = Path(__file__).resolve().parents[1]
 HYBRID_COLLECTION = "technical_docs_hybrid_exp"
 
-
-def load_chunks():
-    sources = json.loads(
-        (ROOT / "data/sources.json").read_text(
-            encoding="utf-8"
-        )
-    )
-
-    if not isinstance(sources, list) or not sources:
-        raise ValueError("Source list is empty or invalid")
-
-    chunks = []
-
-    for source in sources:
-        document = load_markdown(
-            file_path=str(ROOT / source["file_path"]),
-            source_name=source["source_name"],
-            source_url=source["source_url"],
-            document_type=source["document_type"],
-            metadata=source["metadata"],
-        )
-
-        chunks.extend(
-            chunk_document(
-                document,
-                chunk_size=CHUNK_SIZE,
-                chunk_overlap=CHUNK_OVERLAP,
-            )
-        )
-
-    return chunks
 
 
 def main():
@@ -80,7 +51,12 @@ def main():
         )
 
     # 2. Load documents and models
-    chunks = load_chunks()
+    chunks = load_chunks(
+        sources_path=SOURCES_PATH,
+        project_root=PROJECT_ROOT,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+    )
 
     dense_model = EmbeddingModel(
         MODEL_ID,

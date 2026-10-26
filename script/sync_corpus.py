@@ -13,6 +13,8 @@ from technical_rag.config_v2 import (
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     REGISTRY_PATH,
+    PROJECT_ROOT,
+    SOURCES_PATH,
 )
 from technical_rag.embeddings import EmbeddingModel
 from technical_rag.ingestion.embedding_reuse import EmbeddingSpec
@@ -24,38 +26,10 @@ from technical_rag.ingestion.registry_sync import (
 )
 from technical_rag.vector_store import QdrantVectorStore
 
-
-ROOT = Path(__file__).resolve().parents[1]
-SOURCES_PATH = ROOT / "data/sources.json"
+from technical_rag.ingestion.corpus import load_documents
 
 
-def load_documents():
-    sources = json.loads(
-        SOURCES_PATH.read_text(encoding="utf-8")
-    )
 
-    if not isinstance(sources, list) or not sources:
-        raise ValueError("Source list must not be empty")
-
-    documents = []
-
-    for source in sources:
-        document = load_markdown(
-            file_path=str(ROOT / source["file_path"]),
-            source_name=source["source_name"],
-            source_url=source["source_url"],
-            document_type=source["document_type"],
-            metadata=source["metadata"],
-        )
-
-        documents.append(document)
-
-    ids = [document.id for document in documents]
-
-    if len(ids) != len(set(ids)):
-        raise ValueError("Duplicate document IDs")
-
-    return documents
 
 
 def compute_index_signature(document, spec):
@@ -146,7 +120,10 @@ def run_sync(
 
 def main():
     # Load and validate all sources before writing anything
-    documents = load_documents()
+    documents = load_documents(
+        sources_path=SOURCES_PATH,
+        project_root=PROJECT_ROOT,
+    )
 
     store = QdrantVectorStore(
         url=QDRANT_URL,
