@@ -27,9 +27,9 @@ from technical_rag.retrieval.hybrid_index import (
 )
 from technical_rag.retrieval.sparse_embeddings import BM25SparseEncoder
 from technical_rag.vector_store import QdrantVectorStore
+from technical_rag.config import HYBRID_PROFILE
 
-
-HYBRID_COLLECTION = "technical_docs_hybrid_exp"
+HYBRID_COLLECTION = HYBRID_PROFILE.collection_name
 
 
 

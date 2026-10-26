@@ -1,20 +1,17 @@
-from pathlib import Path
 
-MODEL_ID = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+"""Compatibility configuration for existing V2 scripts."""
 
-# Use the same verified revision as your successful V2 bootstrap.
-MODEL_REVISION = "b207367332321f8e44f96e224ef15bc607f4dbf0"
-
-COLLECTION_NAME = "technical_docs_v2"
-QDRANT_URL = "http://localhost:6333"
-
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 150
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-REGISTRY_PATH = (
-    PROJECT_ROOT / "data" / "state" / "registry_v2.db"
+from .config import (
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
+    PROJECT_ROOT,
+    QDRANT_URL,
+    REGISTRY_PATH,
+    SOURCES_PATH,
+    V2_PROFILE,
 )
 
-SOURCES_PATH = PROJECT_ROOT / "data" / "sources.json"
+
+MODEL_ID = V2_PROFILE.embedding_model_id
+MODEL_REVISION = V2_PROFILE.embedding_revision
+COLLECTION_NAME = V2_PROFILE.collection_name

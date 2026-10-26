@@ -10,7 +10,7 @@ from qdrant_client.models import PointStruct
 from ..embedding_text import embedding_text
 from ..models import Chunk
 from ..ingestion.embedding_reuse import EmbeddingSpec
-
+from ..config import SPARSE_MODEL_ID
 
 @dataclass
 class HybridBuild:
@@ -135,7 +135,7 @@ def build_hybrid_points(
                     "section_title": chunk.section_title,
                     "chunk_index": chunk.chunk_index,
                     "_embedding_fingerprint": fingerprint,
-                    "_sparse_model": "Qdrant/bm25",
+                    "_sparse_model": SPARSE_MODEL_ID,
                 },
             )
         )

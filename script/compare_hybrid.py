@@ -17,9 +17,9 @@ from technical_rag.retrieval.sparse_embeddings import (
 from technical_rag.retrieval.qdrant_hybrid import (
     QdrantHybridRetriever,
 )
+from technical_rag.config import HYBRID_PROFILE
 
-
-COLLECTION_NAME = "technical_docs_hybrid_exp"
+COLLECTION_NAME = HYBRID_PROFILE.collection_name
 
 
 def main():

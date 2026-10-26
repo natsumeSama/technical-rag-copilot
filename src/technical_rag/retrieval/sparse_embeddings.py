@@ -4,7 +4,7 @@ from qdrant_client.models import SparseVector
 
 from ..embedding_text import embedding_text
 from ..models import Chunk
-
+from ..config import SPARSE_MODEL_ID
 
 class BM25SparseEncoder:
     def __init__(self, model=None):
@@ -12,7 +12,7 @@ class BM25SparseEncoder:
             model
             if model is not None
             else SparseTextEmbedding(
-                model_name="Qdrant/bm25"
+                model_name=SPARSE_MODEL_ID
             )
         )
 
