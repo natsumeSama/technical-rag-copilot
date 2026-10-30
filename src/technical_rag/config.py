@@ -57,22 +57,24 @@ HYBRID_PROFILE = CollectionProfile(
 )
 
 
+
 def get_pipeline_profile() -> CollectionProfile:
-    """Select the collection supported by the current RAG pipeline."""
+    """Select the configured RAG collection."""
 
     collection_name = os.getenv(
         "RAG_COLLECTION",
         V1_PROFILE.collection_name,
     )
 
-    if collection_name == V1_PROFILE.collection_name:
-        return V1_PROFILE
+    profiles = {
+        V1_PROFILE.collection_name: V1_PROFILE,
+        V2_PROFILE.collection_name: V2_PROFILE,
+        HYBRID_PROFILE.collection_name: HYBRID_PROFILE,
+    }
 
-    if collection_name == V2_PROFILE.collection_name:
-        return V2_PROFILE
-
-    raise ValueError(
-        f"Unsupported RAG_COLLECTION: {collection_name!r}. "
-        "The current RAG pipeline supports V1 and V2. "
-        "The hybrid collection is still experimental."
-    )
+    try:
+        return profiles[collection_name]
+    except KeyError:
+        raise ValueError(
+            f"Unsupported RAG_COLLECTION: {collection_name}"
+        ) from None

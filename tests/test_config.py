@@ -43,18 +43,13 @@ def test_hybrid_uses_same_dense_model_as_v2():
     )
 
 
-def test_experimental_hybrid_is_not_pipeline_ready(monkeypatch):
+def test_hybrid_profile_is_selectable(monkeypatch):
     monkeypatch.setenv(
         "RAG_COLLECTION",
         HYBRID_PROFILE.collection_name,
     )
 
-    with pytest.raises(
-        ValueError,
-        match="still experimental",
-    ):
-        get_pipeline_profile()
-
+    assert get_pipeline_profile() == HYBRID_PROFILE
 
 def test_legacy_v2_imports_are_preserved():
     assert config_v2.MODEL_ID == V2_PROFILE.embedding_model_id

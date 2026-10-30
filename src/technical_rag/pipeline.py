@@ -9,11 +9,12 @@ from .generation.prompt import RAGPromptBuilder
 from .models import RAGResult
 from .retrieval.hybrid import HybridRetriever
 from time import perf_counter
+from .retrieval.qdrant_hybrid import QdrantHybridRetriever
 
 class RAGPipeline:
     def __init__(
         self,
-        retriever: HybridRetriever,
+        retriever: HybridRetriever | QdrantHybridRetriever,
         llm: OllamaLLM,
         grounding_validator: CitationGroundingValidator | None = None,
     ):
