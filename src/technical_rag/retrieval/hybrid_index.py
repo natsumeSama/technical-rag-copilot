@@ -5,13 +5,12 @@ from dataclasses import dataclass
 from uuid import NAMESPACE_URL, uuid5
 
 import numpy as np
-from qdrant_client.models import PointStruct
+from qdrant_client.models import PointIdsList, PointStruct
 
 from ..embedding_text import embedding_text
 from ..models import Chunk
 from ..ingestion.embedding_reuse import EmbeddingSpec
 from ..config import SPARSE_MODEL_ID
-
 @dataclass
 class HybridBuild:
     points: list[PointStruct]
@@ -196,10 +195,8 @@ def index_hybrid_points(
     # 1. Protect against unexpected existing data
     existing = read_points(client, collection_name)
 
-    if set(existing) - set(expected):
-        raise RuntimeError(
-            "Hybrid collection contains unexpected points"
-        )
+    # Points no longer present in our source corpus.
+    stale_ids = sorted(set(existing) - set(expected))
 
     # 2. Upload chunks in batches
     for start in range(0, len(points), batch_size):
@@ -210,7 +207,13 @@ def index_hybrid_points(
             points=batch,
             wait=True,
         )
-
+    # Remove obsolete points only after successful upserts.
+    if stale_ids:
+        client.delete(
+            collection_name=collection_name,
+            points_selector=PointIdsList(points=stale_ids),
+            wait=True,
+        )
     # 3. Verify every stored point
     actual = read_points(
         client,

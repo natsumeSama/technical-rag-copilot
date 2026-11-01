@@ -114,23 +114,39 @@ def test_upload_and_verify_points():
     assert client.upsert.call_args.kwargs["wait"] is True
 
 
-def test_unexpected_points_are_rejected():
+
+def test_stale_points_are_deleted():
     client = Mock()
     client.collection_exists.return_value = True
 
-    client.scroll.return_value = (
-        [SimpleNamespace(id="unexpected")],
-        None,
+    old = SimpleNamespace(id="old-point")
+
+    current = SimpleNamespace(
+        id="current-point",
+        vector={
+            "dense": [1.0, 0.0],
+            "bm25": object(),
+        },
+        payload={"chunk_id": "current"},
     )
 
-    point = SimpleNamespace(
-        id="expected",
-        payload={},
+    client.scroll.side_effect = [
+        ([old], None),
+        ([current], None),
+    ]
+
+    count = index_hybrid_points(
+        client=client,
+        collection_name="test_hybrid",
+        points=[current],
     )
 
-    with pytest.raises(RuntimeError):
-        index_hybrid_points(
-            client, "test_hybrid", [point]
-        )
+    assert count == 1
+    client.upsert.assert_called_once()
+    client.delete.assert_called_once()
 
-    client.upsert.assert_not_called()
+    deleted = client.delete.call_args.kwargs[
+        "points_selector"
+    ].points
+
+    assert deleted == ["old-point"]
