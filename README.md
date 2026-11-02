@@ -1,200 +1,258 @@
-# Technical RAG Copilot — V1
+# Technical RAG Copilot
 
-An experimental, evidence-grounded **Retrieval-Augmented Generation (RAG)** system for answering questions about technical documentation. Built as a hands-on AI engineering project to explore document processing, hybrid search, LLM generation, citation validation, and evaluation.
+An experimental retrieval-augmented generation (RAG) system for technical documentation, developed to study **AI engineering**: retrieval, indexing, evaluation, grounding, reproducibility, and the evolution of document ingestion pipelines.
 
-**Status:** V1 baseline. The next iteration focuses on more reliable ingestion, advanced retrieval, agentic document acquisition, and LLMOps.
+**Project status:** V1 baseline implemented; V2 incremental indexing and an experimental Qdrant-native hybrid retriever implemented; unified retrieval evaluation, production-style hybrid synchronization, and MLOps/agentic ingestion are planned.
 
-## What it does
+This repository is an engineering learning project, **not** a production-ready document assistant.
 
-Given a technical question, the system:
+## 1. Architecture
 
-1. Retrieves relevant passages using **dense semantic search** (Sentence Transformers + Qdrant) and **sparse BM25 search**.
-2. Combines their rankings with **Reciprocal Rank Fusion (RRF)**.
-3. Selects evidence passages and assigns source IDs such as `[S1]` and `[S2]`.
-4. Generates an answer with a local **Qwen3 1.7B** model through Ollama, prompting it to use only retrieved evidence.
-5. Checks citation IDs and runs optional **NLI-based evidence support diagnostics**.
-6. Returns a structured response, including evidence, citation diagnostics, and execution timings.
-
-A **FastAPI** backend exposes the pipeline, and a lightweight HTML chat page offers a simple way to try it locally.
-
-## Architecture
+The current question-answering pipeline is:
 
 ```text
-Local Markdown documentation
-           |
-    Parsing + chunking
-           |
-      Text chunks
-        /      \
-       v        v
-Sentence        BM25
-Transformers     index
-   + Qdrant       |
-       \        /
-        v      v
-      Hybrid retrieval
-         (RRF)
-           |
-    Evidence selection
-           |
-   Qwen3 via Ollama
-           |
- Citation checks + optional NLI
-           |
-      RAG response
-     (FastAPI / UI)
+Question
+   |
+   v
+Dense retrieval (Sentence Transformers + Qdrant)
+        +
+Local BM25 retrieval
+   |
+   v
+Reciprocal Rank Fusion (Python)
+   |
+   v
+Evidence selection (up to 3 passages)
+   |
+   v
+Prompt construction -> Ollama (Qwen3 1.7B)
+   |
+   v
+Citation checks + optional NLI grounding assessment
+   |
+   v
+Structured answer, evidence, diagnostics, timings
 ```
 
-## Tech stack
+The experimental Qdrant-native retriever is a **separate path**:
 
-| Layer | Technology |
+```text
+Question
+   |-- dense query embedding ----> Qdrant named vector: dense
+   |-- sparse BM25 encoding -----> Qdrant sparse vector: bm25
+                                      |
+                                      v
+                               Qdrant RRF fusion
+                                      |
+                                      v
+                                 Ranked chunks
+```
+
+The main `factory.py` still constructs the original Python-based hybrid retriever. Selecting `technical_docs_hybrid_exp` through `RAG_COLLECTION` is intentionally unsupported until the native retriever has been integrated and evaluated.
+
+## 2. Implemented components
+
+| Area | Current implementation |
 | --- | --- |
-| Language / models | Python, Pydantic |
-| Document processing | `python-frontmatter`, LangChain text splitters |
-| Dense retrieval | Sentence Transformers, Qdrant |
-| Sparse retrieval | `bm25s`, PyStemmer |
-| Fusion | Reciprocal Rank Fusion (RRF) |
-| Optional reranking experiments | CrossEncoder |
-| Local generation | Ollama, `qwen3:1.7b` |
-| Grounding diagnostics | NLI CrossEncoder |
-| API and demo | FastAPI, HTML |
-| Tests | pytest |
+| Document ingestion | Markdown files listed in `data/sources.json`; shared document/chunk loaders |
+| Chunking | Header-aware Markdown splitting and recursive splitting (configured at 1,000 characters, 150 overlap) |
+| Dense embeddings | `sentence-transformers/multi-qa-MiniLM-L6-cos-v1` |
+| Dense index | Qdrant |
+| Lexical retrieval | Local BM25 for the existing pipeline |
+| Hybrid baseline | Python reciprocal rank fusion (RRF) of dense and BM25 rankings |
+| Experimental hybrid | Qdrant named dense vectors and FastEmbed `Qdrant/bm25` sparse vectors, fused with Qdrant RRF |
+| Generation | Local Ollama model `qwen3:1.7b` |
+| Grounding | Citation validation and optional NLI-based grounding assessment |
+| Incremental V2 indexing | SQLite document registry, index signatures, chunk-level delta planning, compatible embedding reuse, Qdrant verification |
+| Testing | `pytest` unit tests; several older manual evaluation scripts |
 
-The current embedding model is `sentence-transformers/multi-qa-MiniLM-L6-cos-v1`; the experimental reranker is `cross-encoder/ms-marco-MiniLM-L-6-v2`; and the NLI model is `cross-encoder/nli-MiniLM2-L6-H768`.
+### Collection profiles
 
-## Getting started
+Configuration lives in `src/technical_rag/config.py`:
 
-### Requirements
+| Profile | Qdrant collection | Notes |
+| --- | --- | --- |
+| V1 | `technical_docs_v1` | Historical baseline; embedding revision is not pinned |
+| V2 | `technical_docs_v2` | Pinned dense model revision; incremental synchronizer |
+| Hybrid experiment | `technical_docs_hybrid_exp` | Separate dense+sparse index; not selected by the main factory |
 
-- **Python 3.13+** and [uv](https://docs.astral.sh/uv/)
-- [Docker](https://www.docker.com/) for Qdrant
-- [Ollama](https://ollama.com/) for local LLM inference
-- Local copies of the documentation files listed in [`data/sources.json`](data/sources.json)
+`config_v2.py` currently provides backward-compatible names for scripts not yet migrated to the new configuration API.
 
-> **Important:** The raw Markdown corpus is intentionally excluded from Git (`data/raw/`). A fresh clone cannot index or launch the full pipeline until you place those files at the paths specified by `data/sources.json`. That manifest includes their original source URLs.
+## 3. Repository layout
 
-### 1. Install dependencies
+```text
+src/technical_rag/
+  config.py               # Shared settings and collection profiles
+  factory.py              # Current end-to-end pipeline assembly
+  pipeline.py             # Retrieval -> evidence -> generation -> validation
+  ingestion/              # Markdown loading, registry, deltas, vector reuse, sync
+  retrieval/              # BM25, Python RRF, Qdrant-native hybrid, reranking
+  generation/             # LLM, prompts, citations and grounding
+  vector_store.py         # Dense Qdrant operations
+
+script/                    # Active indexing, diagnostics and evaluation commands
+experiments/               # Archived exploratory scripts (not automated tests)
+tests/                     # Automated pytest tests
+data/sources.json          # Corpus source manifest
+data/evaluation/           # Manually curated evaluation cases
+```
+
+The files under `experiments/` are historical and may use older configurations or perform side effects; they should not be treated as maintained operational commands.
+
+## 4. Local setup
+
+**Requirements:** Python 3.13+, [`uv`](https://docs.astral.sh/uv/), Docker with Qdrant, and Ollama. Local model downloads and document files are required. All commands below run from the repository root.
+
+Install dependencies:
 
 ```bash
-git clone https://github.com/natsumeSama/technical-rag-copilot.git
-cd technical-rag-copilot
 uv sync
 ```
 
-### 2. Start Qdrant
+Start a local Qdrant server if one is not already running:
 
 ```bash
-docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdrant/qdrant
+docker run -d --name qdrant -p 6333:6333 -p 6334:6334 -v qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-If the container already exists and is stopped, use `docker start qdrant` instead.
+Qdrant is configured at `http://localhost:6333`. If you already have a Qdrant container, use it rather than creating a duplicate. The example stores its data in a Docker-managed volume.
 
-### 3. Prepare Ollama
+Install the configured Ollama model:
 
 ```bash
 ollama pull qwen3:1.7b
 ```
 
-Make sure the Ollama service is running. The embedding and NLI models are downloaded on first use through Sentence Transformers.
+Ensure Ollama is running (`ollama serve` if your installation does not already run it as a service).
 
-### 4. Add the documentation corpus
+### Corpus requirements
 
-Use [`data/sources.json`](data/sources.json) as the manifest. Download the seven referenced technical Markdown files from their source URLs and save each one to its matching `data/raw/...` path.
+The manifest `data/sources.json` references local Markdown files under `data/raw/`. **The raw documentation files are not committed to Git**, so a fresh checkout is not immediately ready for indexing. Populate the paths declared by the manifest before running corpus-dependent scripts.
 
-### 5. Build the Qdrant index
+This repository does not yet have an automated, verified document acquisition pipeline; this is part of the planned agentic-ingestion work.
+
+## 5. V2 indexing workflow
+
+The dense V2 collection must be created **once**:
 
 ```bash
-uv run python script/index_corpus.py
+uv run python script/bootstrap_v2.py
 ```
 
-> **Warning:** In V1, this script **deletes and recreates** the Qdrant collection `technical_docs_v1`. Do not use it against a collection whose contents you need to preserve.
+**Do not rerun the bootstrap on an existing collection.** It intentionally refuses to overwrite `technical_docs_v2`.
 
-BM25 is rebuilt from the same local Markdown corpus when the application initializes.
+Inspect content-based changes:
 
-### 6. Run the API and demo UI
+```bash
+uv run python script/scan_corpus.py
+```
+
+`scan_corpus.py` compares document content hashes only. It does **not** detect changes to metadata, embedding models or chunking settings. The synchronization workflow uses a richer index signature.
+
+Synchronize the V2 corpus incrementally:
+
+```bash
+uv run python script/sync_corpus.py
+```
+
+The synchronizer:
+
+1. Loads the current source manifest and documents.
+2. Uses index signatures to skip unchanged documents.
+3. Computes chunk deltas for changed documents.
+4. Reuses compatible stored dense embeddings when possible.
+5. Upserts/deletes points in Qdrant, verifies the result, then updates SQLite state.
+
+The local SQLite registry is stored under `data/state/` and is not committed. Its state is part of a local deployment and should not be mistaken for a complete remote source of truth.
+
+**Important limitation:** `sync_corpus.py` updates the dense V2 collection only. It does not automatically synchronize `technical_docs_hybrid_exp`; that experimental index can become stale after a document update.
+
+## 6. Experimental native hybrid retrieval
+
+The following commands require the V2 dense collection to exist and the corpus to be available.
+
+Create the experimental hybrid collection **once**:
+
+```bash
+uv run python script/bootstrap_hybrid.py
+```
+
+Populate/verify its dense and sparse vectors:
+
+```bash
+uv run python script/index_hybrid.py
+```
+
+Compare query-time dense, sparse and RRF-fused rankings:
+
+```bash
+uv run python script/compare_hybrid.py --query "Which similarity metrics does Qdrant support?"
+```
+
+This comparison prints example rankings; **it is not a statistically meaningful benchmark**. Its hybrid scores are fusion scores, not calibrated answer probabilities.
+
+## 7. Run the RAG pipeline
+
+The main pipeline defaults to the V1 collection (`technical_docs_v1`). To use the V2 dense collection with the **existing Python-based hybrid retriever**, select V2 before launching the pipeline.
+
+PowerShell:
+
+```powershell
+$env:RAG_COLLECTION = "technical_docs_v2"
+uv run python script/smoke_rag.py
+```
+
+Windows Command Prompt:
+
+```bat
+set RAG_COLLECTION=technical_docs_v2
+uv run python script/smoke_rag.py
+```
+
+Alternatively, start the FastAPI application:
 
 ```bash
 uv run uvicorn technical_rag.api:app --reload
 ```
 
-- Demo chat: http://127.0.0.1:8000/
-- Interactive API docs: http://127.0.0.1:8000/docs
-- Health endpoint: `GET /health`
-- Question endpoint: `POST /ask`
+Its `/ask` endpoint returns an answer, retrieved evidence, citation diagnostics, optional NLI grounding results and stage timings. The API is a development interface, not a hardened service.
 
-Example request (PowerShell):
+## 8. Evaluation and testing
 
-```powershell
-Invoke-RestMethod -Uri 'http://127.0.0.1:8000/ask' -Method Post -ContentType 'application/json' -Body '{"question":"Which similarity metrics does Qdrant support?"}'
-```
-
-Or use the Python pipeline directly:
-
-```python
-from technical_rag.factory import build_pipeline
-
-rag = build_pipeline()
-result = rag.ask("Which similarity metrics does Qdrant support?")
-print(result.answer)
-```
-
-## Evaluation and experiments
-
-V1 includes scripts to evaluate **dense retrieval**, **BM25**, **hybrid RRF**, **cross-encoder reranking**, **NLI grounding diagnostics**, and the **end-to-end answer pipeline**. The evaluation datasets are stored in `data/evaluation/`.
+Run automated tests:
 
 ```bash
-# Tests that use mocked external components
-uv run pytest
-
-# Retrieval evaluation (requires the indexed corpus)
-uv run python script/evaluate_hybrid.py
-uv run python script/evaluate_reranker.py
-
-# Generation evaluation (requires Qdrant and Ollama)
-uv run python script/evaluate_generation.py
+uv run python -m pytest -q
 ```
 
-The retrieval scripts report **Hit@1, Hit@3, and Mean Reciprocal Rank (MRR)**. Early experiments favored the hybrid RRF baseline over the tested reranking configuration, but the benchmark is small. Generation experiments revealed cases where a syntactically valid citation did not actually support the corresponding claim. NLI judgments were also imperfect.
+The existing evaluation files include:
 
-**These are exploratory results, not production-grade reliability claims.** The benchmark is too small to generalize performance, and the evaluation scripts should be rerun on a larger, reviewed dataset.
+- `data/evaluation/retrieval_eval.json`: 20 question/target annotations for retrieval evaluation.
+- `data/evaluation/generation_eval.json`: cases for generated-answer review.
+- `data/evaluation/grounding_eval.json`: evidence/claim pairs for NLI assessment.
 
-## Repository layout
+Legacy evaluation scripts remain under `script/evaluate_*.py`. They are useful for historical experiments but are **not yet one standardized benchmark**. The unit tests do not by themselves establish real-world answer accuracy, corpus freshness or end-to-end reliability under a running Qdrant/Ollama stack.
 
-```text
-src/technical_rag/
-  ingestion/          Markdown loading
-  retrieval/          BM25, hybrid fusion, reranking
-  generation/         Ollama, prompts, citation / NLI checks
-  chunking.py         Header-aware chunking
-  embeddings.py       Embedding interface
-  vector_store.py     Qdrant integration
-  context.py          Evidence selection and formatting
-  pipeline.py         End-to-end RAG execution
-  factory.py          Component wiring
-  api.py              FastAPI endpoints
-  static/index.html   Lightweight chat UI
-script/                Indexing, experiments, evaluation
-tests/                Automated tests
-data/sources.json      Documentation manifest
-data/evaluation/       Evaluation datasets
-```
+### Evaluation principles for the next milestone
 
-## Known V1 limitations
+To compare methods fairly, we should keep the corpus, queries, target labels, model versions and candidate budgets fixed. Planned retrieval metrics include Hit@k/Recall@k and MRR, with per-question failure analysis and latency reporting. Any claims of improvement should be tied to reproducible evaluation results rather than a handful of example queries.
 
-- **Static ingestion:** only manually prepared Markdown files; no PDF/HTML pipeline or automatic source updates.
-- **Full Qdrant rebuilds:** no incremental indexing, persistent document registry, or coordinated versioning with BM25.
-- **Small corpus and evaluations:** insufficient for reliable estimates of real-world performance.
-- **Basic context selection:** duplicate-section filtering can omit useful passages.
-- **Limited grounding verification:** citation syntax checks and NLI scores do not guarantee factual support.
-- **Local-first operation:** no production deployment, continuous monitoring, or managed model serving.
+## 9. Known limitations
 
-## What comes next — V2
+- The current main pipeline does not yet use the Qdrant-native hybrid retriever.
+- V2 document sync does not propagate updates to the experimental hybrid collection.
+- A new checkout needs local raw documentation files before indexing or corpus-based inference can run.
+- Some historical evaluation and experiment scripts retain older configuration assumptions.
+- V1 does not pin an embedding revision, limiting exact reproducibility of historical runs.
+- No unified experiment-tracking or continuous evaluation workflow exists yet.
+- No automated agentic discovery, source verification, approval or refresh workflow exists yet.
+- Citation/NLI checks are useful diagnostics but do not guarantee factual correctness.
 
-V2 will develop this baseline into a more capable **document intelligence system**, focusing on:
+## 10. Roadmap
 
-1. Versioned, incremental ingestion and reliable index synchronization.
-2. Better retrieval and evaluation on harder, larger benchmarks.
-3. Tool-using document discovery with human approval for updates.
-4. Reproducible experiments, tracing, and automated checks (LLMOps/MLOps).
+1. **Unified retrieval benchmark:** one evaluation runner and comparable reports for dense, BM25, Python RRF, Qdrant RRF and reranking.
+2. **Hybrid integration:** select retrieval strategy through configuration; synchronize both indexes safely; test changes and deletions.
+3. **AI engineering / LLMOps:** reproducible runs, dataset and index versioning, CI regression checks, observability and latency analysis.
+4. **Agentic ingestion:** controlled source discovery and fetching, trust/quality checks, deduplication, approval and incremental updates.
 
-The goal is to learn and demonstrate AI engineering decisions through experiments and maintainable code—not to prioritize a polished frontend.
+The focus is to learn how to **measure and maintain** a RAG system, not merely make a chatbot interface.

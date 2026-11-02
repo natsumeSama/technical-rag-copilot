@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "bm25s>=0.3.12",
     "fastapi>=0.146.0",
+    "fastembed>=0.9.1",
     "langchain-text-splitters>=1.1.2",
     "ollama>=0.6.3",
     "pydantic>=2.13.5",
@@ -19,9 +20,6 @@ dependencies = [
     "sentence-transformers>=6.1.0",
     "uvicorn[standard]>=0.54.0",
 ]
-
-[project.scripts]
-technical-rag-copilot = "technical_rag_copilot:main"
 
 [build-system]
 requires = ["uv_build>=0.12.19,<0.13.0"]
@@ -35,3 +33,5 @@ dev = [
     "httpx>=0.28.1",
     "pytest>=9.1.1",
 ]
+[tool.pytest.ini_options]
+testpaths = ["tests"]

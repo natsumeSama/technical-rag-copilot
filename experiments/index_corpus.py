@@ -5,13 +5,13 @@ from technical_rag.chunking import chunk_document
 from technical_rag.embeddings import EmbeddingModel
 from technical_rag.ingestion.markdown import load_markdown
 from technical_rag.vector_store import QdrantVectorStore
-
+from uuid import uuid4
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCES_PATH = PROJECT_ROOT / "data" / "sources.json"
 
 MODEL_NAME = "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
-COLLECTION_NAME = "technical_docs_v1"
+COLLECTION_NAME = f"technical_docs_v2_stage_{uuid4().hex[:8]}"
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
@@ -62,7 +62,7 @@ vector_store = QdrantVectorStore(
     collection_name=COLLECTION_NAME,
 )
 
-vector_store.reset_collection(
+vector_store.create_collection(
     vector_size=embedding_model.dimension,
 )
 
@@ -70,6 +70,18 @@ vector_store.upsert_chunks(
     chunks=all_chunks,
     embeddings=embeddings,
 )
+stored_count = vector_store.client.count(
+    collection_name=COLLECTION_NAME,
+    exact=True,
+).count
+
+if stored_count != len(all_chunks):
+    raise RuntimeError(
+        f"Expected {len(all_chunks)} chunks, "
+        f"found {stored_count}"
+    )
+
+print(f"Staging collection verified: {stored_count} chunks")
 
 print(
     f"Indexed {len(all_chunks)} chunks "

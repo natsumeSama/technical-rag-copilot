@@ -57,6 +57,6 @@ results = vector_store.search(
 
 for result in results:
     print(f"Score: {result.score:.4f}")
-    print(f"Section: {result.payload.get('section_title')}")
-    print(result.payload.get("content"))
+    print(f"Section: {result.section_title}")
+    print(result.content)
     print("-" * 60)
