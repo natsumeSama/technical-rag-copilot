@@ -106,18 +106,34 @@ for index, case in enumerate(cases, 1):
         for t in case["relevant_targets"]
     }
 
+
+    # Retrieve more candidates to handle tied scores fairly.
     old_results = v2.search(
         question,
         mode="hybrid",
-        limit=K,
+        limit=CANDIDATES,
         candidate_limit=CANDIDATES,
     )
 
     new_results = v3.similarity_search_with_score(
         question,
         k=CANDIDATES,
+    )
+
+    # Higher score first; use stable chunk ID to break ties.
+    old_results = sorted(
+        old_results,
+        key=lambda r: (-r.score, r.chunk_id),
     )[:K]
 
+    new_results = sorted(
+        new_results,
+        key=lambda item: (
+            -item[1],
+            item[0].metadata["chunk_id"],
+        ),
+    )[:K]
+         
     v2_run[qid] = rank_scores([
         (r.metadata.get("document_title"), r.section_title)
         for r in old_results
