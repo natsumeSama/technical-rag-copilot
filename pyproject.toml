@@ -35,6 +35,7 @@ module-name = "technical_rag"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "ir-measures>=0.4.3",
     "pytest>=9.1.1",
 ]
 [tool.pytest.ini_options]
