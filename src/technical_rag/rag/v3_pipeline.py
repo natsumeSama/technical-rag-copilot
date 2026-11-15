@@ -7,7 +7,10 @@ from langchain_ollama import ChatOllama
 from langchain_qdrant import QdrantVectorStore
 
 from technical_rag.context import ContextBuilder
-from technical_rag.generation.citations import CitationValidator
+from technical_rag.generation.citations import (
+    CitationValidator,
+    CitationGroundingValidator,
+)
 from technical_rag.generation.prompt import RAGPromptBuilder
 from technical_rag.models import RAGResult
 from technical_rag.retrieval.langchain_adapter import to_search_results
@@ -17,6 +20,7 @@ def ask_v3(
     question: str,
     store: QdrantVectorStore,
     llm: ChatOllama,
+    grounding_validator: CitationGroundingValidator | None = None,
 ) -> RAGResult:
     if not question.strip():
         raise ValueError("Question cannot be empty")
@@ -81,6 +85,15 @@ def ask_v3(
 
     uncited = validator.extract_uncited_statements(answer)
 
+    # 5. Optional semantic grounding assessment
+    grounding = []
+
+    if grounding_validator is not None:
+        grounding = grounding_validator.validate(
+            answer=answer,
+            evidence=evidence,
+        )
+
     validation_s = perf_counter() - validation_started
 
     # 5. Return our structured result
@@ -91,7 +104,7 @@ def ask_v3(
         valid_citations=valid,
         invalid_citations=invalid,
         uncited_statements=uncited,
-        grounding=[],
+        grounding=grounding,
         timing_seconds={
             "retrieval": round(retrieval_s, 3),
             "generation": round(generation_s, 3),
