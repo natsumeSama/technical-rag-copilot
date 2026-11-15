@@ -4,7 +4,6 @@ from time import perf_counter
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_ollama import ChatOllama
 from langchain_qdrant import (
     FastEmbedSparse,
     QdrantVectorStore,
@@ -16,7 +15,6 @@ from technical_rag.config import (
     QDRANT_URL,
     V2_PROFILE,
     SPARSE_MODEL_ID,
-    LLM_MODEL_ID,
 )
 from technical_rag.context import ContextBuilder
 from technical_rag.generation.citations import CitationValidator
@@ -26,6 +24,7 @@ from technical_rag.retrieval.langchain_adapter import (
     to_search_results,
 )
 from technical_rag.retrieval.v3_store import build_v3_store
+from technical_rag.generation.v3_llm import build_v3_llm
 
 COLLECTION = "technical_docs_v3_hybrid"
 QUESTION = "Which similarity metrics does Qdrant support?"
@@ -70,13 +69,7 @@ def main():
     )
 
     # 4. Generate with ChatOllama
-    llm = ChatOllama(
-        model=LLM_MODEL_ID,
-        temperature=0,
-        num_predict=256,
-        num_ctx=2048,
-        reasoning=False,
-    )
+    llm = build_v3_llm()
 
     generation_started = perf_counter()
 
