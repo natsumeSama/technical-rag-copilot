@@ -25,6 +25,7 @@ from technical_rag.models import RAGResult
 from technical_rag.retrieval.langchain_adapter import (
     to_search_results,
 )
+from technical_rag.retrieval.v3_store import build_v3_store
 
 COLLECTION = "technical_docs_v3_hybrid"
 QUESTION = "Which similarity metrics does Qdrant support?"
@@ -33,28 +34,7 @@ QUESTION = "Which similarity metrics does Qdrant support?"
 def main():
     started = perf_counter()
 
-    client = QdrantClient(url=QDRANT_URL)
-
-    if not client.collection_exists(COLLECTION):
-        raise RuntimeError(f"Missing collection: {COLLECTION}")
-
-    # 1. Configure the LangChain vector store
-    store = QdrantVectorStore(
-        client=client,
-        collection_name=COLLECTION,
-        embedding=HuggingFaceEmbeddings(
-            model_name=V2_PROFILE.embedding_model_id,
-            model_kwargs={"revision": V2_PROFILE.embedding_revision},
-            encode_kwargs={"normalize_embeddings": True},
-        ),
-        sparse_embedding=FastEmbedSparse(
-            model_name=SPARSE_MODEL_ID,
-        ),
-        retrieval_mode=RetrievalMode.HYBRID,
-        vector_name="dense",
-        sparse_vector_name="bm25",
-    )
-
+    store = build_v3_store()
     # 2. Retrieve and prepare evidence
     retrieved = store.similarity_search_with_score(
         QUESTION,
