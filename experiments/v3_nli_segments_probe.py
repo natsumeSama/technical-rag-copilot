@@ -52,6 +52,32 @@ def main():
             "RRF ignores the positions of results within each query.",
             "contradiction",
         ),
+        (
+            "A1 unrelated",
+            a1,
+            "Qdrant was founded in 1997.",
+            "neutral",
+        ),
+        (
+            "A1 partially false",
+            a1,
+            "Qdrant supports cosine similarity, "
+            "but it does not support Manhattan distance.",
+            "contradiction",
+        ),
+        (
+            "A2 unrelated",
+            a2,
+            "RRF was invented in 1975.",
+            "neutral",
+        ),
+        (
+            "A2 partially false",
+            a2,
+            "RRF considers the positions of results, "
+            "but gives higher scores to lower-ranked results.",
+            "contradiction",
+        ),
     ]
 
     splitter = RecursiveCharacterTextSplitter(
