@@ -1,6 +1,7 @@
 """Investigate how evidence segmentation affects NLI predictions."""
 
 import json
+import argparse
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -12,6 +13,13 @@ RESULTS_PATH = PROJECT_ROOT / "data/evaluation/results/generation_results_v3.jso
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model",
+        default=NLI_MODEL_ID,
+        help="Pretrained NLI model to evaluate",
+    )
+    args = parser.parse_args()
     records = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
     by_id = {record["id"]: record for record in records}
 
@@ -86,7 +94,8 @@ def main():
         separators=["\n\n", "\n", ". ", " ", ""],
     )
 
-    validator = CitationGroundingValidator(NLI_MODEL_ID)
+    validator = CitationGroundingValidator(args.model)
+    print("NLI model:", args.model)
 
     for name, source, claim, expected in cases:
         print(f"\n{'=' * 65}")
