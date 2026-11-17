@@ -1,3 +1,4 @@
+"""Tests for the V3 FastAPI application."""
 
 from unittest.mock import Mock
 
@@ -10,10 +11,12 @@ from technical_rag.models import Evidence, RAGResult
 
 @pytest.fixture
 def client(monkeypatch):
-    # Fake RAG: no Qdrant or Ollama required
-    fake_rag = Mock()
+    """Mock V3 components without starting Qdrant or Ollama."""
 
-    fake_rag.ask.return_value = RAGResult(
+    fake_store = Mock()
+    fake_llm = Mock()
+
+    fake_result = RAGResult(
         question="Which metric does Qdrant support?",
         answer="Qdrant supports cosine similarity. [S1]",
         evidence=[
@@ -40,18 +43,30 @@ def client(monkeypatch):
         },
     )
 
-    # Replace the real pipeline factory during tests
+    fake_ask = Mock(return_value=fake_result)
+
+    # Replace real V3 components during startup
     monkeypatch.setattr(
-        "technical_rag.api.build_pipeline",
-        lambda enable_grounding=True: fake_rag,
+        "technical_rag.api.build_v3_store",
+        lambda: fake_store,
+    )
+
+    monkeypatch.setattr(
+        "technical_rag.api.build_v3_llm",
+        lambda: fake_llm,
+    )
+
+    monkeypatch.setattr(
+        "technical_rag.api.ask_v3",
+        fake_ask,
     )
 
     with TestClient(app) as test_client:
-        yield test_client, fake_rag
+        yield test_client, fake_ask, fake_store, fake_llm
 
 
 def test_health(client):
-    test_client, _ = client
+    test_client, _, _, _ = client
 
     response = test_client.get("/health")
 
@@ -60,7 +75,7 @@ def test_health(client):
 
 
 def test_ask_success(client):
-    test_client, fake_rag = client
+    test_client, fake_ask, fake_store, fake_llm = client
 
     response = test_client.post(
         "/ask",
@@ -71,21 +86,23 @@ def test_ask_success(client):
 
     data = response.json()
 
-    assert data["answer"] == (
-        "Qdrant supports cosine similarity. [S1]"
-    )
+    assert data["answer"] == ("Qdrant supports cosine similarity. [S1]")
     assert data["valid_citations"] == ["S1"]
     assert data["invalid_citations"] == []
     assert len(data["evidence"]) == 1
+    assert data["evidence"][0]["citation_id"] == "S1"
     assert "timing_seconds" in data
+    assert data["grounding"] == []
 
-    fake_rag.ask.assert_called_once_with(
-        "Which metric does Qdrant support?"
+    fake_ask.assert_called_once_with(
+        question="Which metric does Qdrant support?",
+        store=fake_store,
+        llm=fake_llm,
     )
 
 
 def test_ask_empty_question(client):
-    test_client, fake_rag = client
+    test_client, fake_ask, _, _ = client
 
     response = test_client.post(
         "/ask",
@@ -93,11 +110,11 @@ def test_ask_empty_question(client):
     )
 
     assert response.status_code == 422
-    fake_rag.ask.assert_not_called()
+    fake_ask.assert_not_called()
 
 
 def test_ask_whitespace_question(client):
-    test_client, fake_rag = client
+    test_client, fake_ask, _, _ = client
 
     response = test_client.post(
         "/ask",
@@ -105,11 +122,11 @@ def test_ask_whitespace_question(client):
     )
 
     assert response.status_code == 422
-    fake_rag.ask.assert_not_called()
+    fake_ask.assert_not_called()
 
 
 def test_ask_missing_question(client):
-    test_client, fake_rag = client
+    test_client, fake_ask, _, _ = client
 
     response = test_client.post(
         "/ask",
@@ -117,10 +134,11 @@ def test_ask_missing_question(client):
     )
 
     assert response.status_code == 422
-    fake_rag.ask.assert_not_called()
+    fake_ask.assert_not_called()
+
 
 def test_homepage(client):
-    test_client, _ = client
+    test_client, _, _, _ = client
 
     response = test_client.get("/")
 
