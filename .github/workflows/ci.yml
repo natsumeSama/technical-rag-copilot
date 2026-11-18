@@ -1,0 +1,35 @@
+name: V3 Continuous Integration
+
+on:
+  push:
+    branches:
+      - v3
+  pull_request:
+    branches:
+      - v3
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: V3 Unit Tests
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.13"
+          enable-cache: false
+
+      - name: Install dependencies
+        run: uv sync --locked --group dev
+
+      - name: Run V3 tests
+        run: uv run --no-sync python -m pytest tests/test_api.py tests/test_v3_pipeline.py -v
